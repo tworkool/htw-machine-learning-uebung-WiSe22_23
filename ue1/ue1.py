@@ -1,13 +1,13 @@
 import math
 import numpy as np
-from helpers import visualize_array
 import seaborn as sns
 import numpy as np
 import pandas as pdm
 import pprint
+import matplotlib.pyplot as plt
 
 # %%
-dataset_metadata = [
+metadata = [
     {"name": "titanic", "params": ['parch', 'age', 'fare']},
     {"name": "iris", "params": [
         'sepal_length', 'sepal_width', 'petal_length']},
@@ -20,14 +20,6 @@ dataset_metadata = [
         'not_distracted', 'no_previous', 'ins_premium']},
     {"name": "tips", "params": ['total_bill', 'tip', 'size']},
 ]
-
-datasets = {
-
-}
-
-datasets_rd = {
-
-}
 
 
 class Zscore:
@@ -47,44 +39,65 @@ class Zscore:
         return average_score
 
 
-for dm in dataset_metadata:
-    print(f"INFO *** ---Dataset: {dm['name']}---")
-    # LOAD DATA
-    if dm['name'] in datasets:
-        raw_data = datasets_rd[dm['name']]
-    else:
-        try:
-            raw_data = sns.load_dataset(dm['name'])
-            datasets[dm['name']] = {
-                "measurements": [],
-                "raw_data": "WRITE 'raw_data' HERE TO DISPLAY"
-            }
-            datasets_rd[dm['name']] = raw_data
-        except Exception:
-            print(f"ERROR *** Could not load dataset")
+def analyse_datasets(datasets_metadata):
+    analysed_dataset = {}
+    raw_data_from_datasets = {}
+    for dm in datasets_metadata:
+        print(f"INFO *** ---Dataset: {dm['name']}---")
+        # LOAD DATA
+        if dm['name'] in analysed_dataset:
+            raw_data = raw_data_from_datasets[dm['name']]
+        else:
+            try:
+                raw_data = sns.load_dataset(dm['name'])
+                analysed_dataset[dm['name']] = {
+                    "measurements": [],
+                    "raw_data": "WRITE 'raw_data' HERE TO DISPLAY"
+                }
+                raw_data_from_datasets[dm['name']] = raw_data
+            except Exception:
+                print(f"ERROR *** Could not load dataset")
 
-    # DO CALCULATIONS
-    measurement = {
-        "params": dm['params'],
-        "data": {}
-    }
-    for p in dm['params']:
-        print(f"INFO *** ------Parameter in Dataset: {dm['name']}/{p}------")
-        try:
-            score_calc = Zscore(raw_data[p])
-            scores = score_calc.get_score()
-            # print(f"INFO *** Scores: {scores}")
-            avg_scores = score_calc.get_average_score()
-            print(f"INFO *** Average Score: {avg_scores}")
+        # DO CALCULATIONS
+        measurement = {
+            "params": dm['params'],
+            "data": {}
+        }
+        for p in dm['params']:
+            print(
+                f"INFO *** ------Parameter in Dataset: {dm['name']}/{p}------")
+            try:
+                score_calc = Zscore(raw_data[p])
+                scores = score_calc.get_score()
+                # print(f"INFO *** Scores: {scores}")
+                avg_scores = score_calc.get_average_score()
+                print(f"INFO *** Average Score: {avg_scores}")
 
-            measurement['data'] = {
-                "param_name": p,
-                "scores": "WRITE 'scores' HERE TO DISPLAY SCORE TABLE",
-                "avg_scores": avg_scores
-            }
-        except Exception:
-            print(f"ERROR *** Could not load param for dataset")
-    datasets[dm['name']]['measurements'].append(measurement)
+                measurement['data'] = {
+                    "param_name": p,
+                    "scores": "WRITE 'scores' HERE TO DISPLAY SCORE TABLE",
+                    "avg_scores": avg_scores
+                }
+            except Exception:
+                print(f"ERROR *** Could not load param for dataset")
+        analysed_dataset[dm['name']]['measurements'].append(measurement)
 
-pprint.pprint(datasets)
-#print(datasets_rd) # print raw data from datasets
+    return analysed_dataset, raw_data_from_datasets
+
+
+# analyse multiple tables
+""" al_ds, rd_ds = analyse_dataset(metadata)
+pprint.pprint(al_ds) """
+# print(rd_ds) # print raw data from datasets
+
+# analyse 2 tables and visualize
+titanic_data = sns.load_dataset("titanic")
+print(titanic_data.head())
+titanic_data_score = Zscore(titanic_data["age"])
+scores = titanic_data_score.get_score()
+print(f"INFO *** Scores: {scores}")
+avg_scores = titanic_data_score.get_average_score()
+print(sns.scatterplot(data=titanic_data, x="age", y="deck",
+      style="survived", hue="sex", size="survived"))
+
+plt.show()
